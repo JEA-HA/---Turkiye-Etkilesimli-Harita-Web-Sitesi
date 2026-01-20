@@ -1,0 +1,167 @@
+﻿@model IEnumerable<TurkeyCityGuide.Models.City>
+
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+@{
+    var backgroundPhotos = ViewBag.BackgroundPhotos as List<TurkeyCityGuide.Models.CityPhoto>;
+}
+
+<!-- Background Slideshow -->
+<div id="bg-slideshow" class="position-fixed w-100" style="top: 76px; bottom: 60px; left: 0; z-index: -1; overflow: hidden; background-color: #f8f9fa;">
+    @if (backgroundPhotos != null && backgroundPhotos.Any())
+    {
+        @for (int i = 0; i < backgroundPhotos.Count; i++)
+        {
+            var photo = backgroundPhotos[i];
+            <div class="bg-slide position-absolute w-100 h-100 @(i == 0 ? "active" : "")" 
+                 style="background-image: url('@photo.ImagePath'); 
+                        background-size: cover; 
+                        background-position: center; 
+                        background-repeat: no-repeat;
+                        opacity: 0; 
+                        transition: opacity 1.5s ease-in-out;"
+                 data-city-name="@photo.City.Name">
+            </div>
+        }
+    }
+</div>
+
+<!-- Photo Credit / City Name -->
+<div id="bg-credit" class="position-fixed end-0 px-3 py-2 rounded-pill bg-white shadow-sm border" 
+     style="bottom: 70px; right: 20px; z-index: 2000; opacity: 0.95; display: none;">
+    <small class="text-muted me-1">Fotoğraf:</small>
+    <span id="bg-city-name" class="fw-bold text-danger"></span>
+</div>
+
+<div class="text-center mb-4 position-relative" style="z-index: 1;">
+    <h1 class="display-5 fw-bold text-danger ls-2">TÜRKİYE'Yİ KEŞFET</h1>
+    <p class="lead text-black mb-0 mt-2 fw-bold">Bir şehre tıklayarak güzelliklerini keşfedin.</p>
+</div>
+
+<div class="container-fluid px-lg-5 mt-4 position-relative" style="z-index: 1;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="map-container text-center">
+                <object 
+                    type="image/svg+xml" 
+                    data="/maps/turkey.svg" 
+                    id="turkeyMap"
+                    class="img-fluid"
+                    style="width:100%; height:auto; max-height: 80vh;">
+                </object>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // --- BACKGROUND SLIDESHOW ---
+    const slides = document.querySelectorAll(".bg-slide");
+    const creditBox = document.getElementById("bg-credit");
+    const creditName = document.getElementById("bg-city-name");
+    
+    if (slides.length > 0) {
+        let currentSlide = 0;
+        
+        // Settings
+        const slideInterval = 5000; // 5 seconds
+        const opacityValue = 0.8; // Updated to 80% as requested
+
+        function showSlide(index) {
+            // Hide all
+            slides.forEach(s => s.style.opacity = 0);
+            
+            // Show current
+            const slide = slides[index];
+            slide.style.opacity = opacityValue;
+            
+            // Update Text
+            const cityName = slide.dataset.cityName;
+            if (cityName) {
+                creditName.textContent = cityName;
+                creditBox.style.display = "block";
+            }
+        }
+
+        // Initial Show
+        showSlide(0);
+
+        // Cycle
+        if (slides.length > 1) {
+            setInterval(() => {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }, slideInterval);
+        }
+    }
+
+
+    // --- MAP LOGIC ---
+    const svgObject = document.getElementById("turkeyMap");
+    let tooltip = null;
+
+    if (!svgObject) {
+        console.log("SVG object bulunamadı");
+        return;
+    }
+
+    // Tooltip oluştur
+    function createTooltip() {
+        tooltip = document.createElement("div");
+        tooltip.id = "cityTooltip";
+        tooltip.style.cssText = "position: absolute; background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 4px; pointer-events: none; z-index: 1000; font-weight: bold; display: none;";
+        document.body.appendChild(tooltip);
+    }
+
+    createTooltip();
+
+    svgObject.addEventListener("load", function () {
+        const svgDoc = svgObject.contentDocument;
+
+        if (!svgDoc) {
+            console.log("SVG document yüklenemedi");
+            return;
+        }
+
+        const paths = svgDoc.querySelectorAll("path");
+
+        paths.forEach(path => {
+            path.style.cursor = "pointer";
+            const cityName = path.getAttribute("name");
+
+            path.addEventListener("mouseenter", (e) => {
+                path.style.fill = "#ff6b6b";
+                
+                // Tooltip göster
+                if (tooltip && cityName) {
+                    tooltip.textContent = cityName;
+                    tooltip.style.display = "block";
+                }
+            });
+
+            path.addEventListener("mousemove", (e) => {
+                if (tooltip && cityName) {
+                    // Use pageX/Y to account for scrolling
+                    tooltip.style.left = (e.pageX + 15) + "px";
+                    tooltip.style.top = (e.pageY + 15) + "px";
+                }
+            });
+
+            path.addEventListener("mouseleave", () => {
+                path.style.fill = "";
+                if (tooltip) {
+                    tooltip.style.display = "none";
+                }
+            });
+
+            path.addEventListener("click", () => {
+                if (cityName) {
+                    window.location.href = "/City/Detail/" + cityName;
+                }
+            });
+        });
+    });
+});
+</script>

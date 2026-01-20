@@ -1,0 +1,597 @@
+@model TurkeyCityGuide.Models.City
+
+@{
+    ViewData["Title"] = Model.Name;
+    var citySlug = Model.Name.ToLower(); // ankara, istanbul vs.
+}
+
+<!-- NEW: Offcanvas District Sidebar -->
+<div class="offcanvas offcanvas-start offcanvas-custom" tabindex="-1" id="offcanvasDistricts" aria-labelledby="offcanvasDistrictsLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title fw-bold text-dark" id="offcanvasDistrictsLabel">
+            <i class="bi bi-map-fill me-2 text-danger"></i>@Model.Name İlçeleri
+        </h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Kapat"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0" id="districtSearch" placeholder="İlçe ara...">
+            </div>
+        </div>
+        
+        <div class="list-group district-list-group" id="districtList">
+            <button type="button" class="list-group-item list-group-item-action district-filter-btn" data-district-id="" data-district-name="">
+                <i class="bi bi-heptagon me-2 text-muted"></i>Tümü
+            </button>
+            @foreach (var district in Model.Districts)
+            {
+                <button type="button" class="list-group-item list-group-item-action district-filter-btn @(ViewBag.SelectedDistrictId == district.Id ? "active" : "")" data-district-id="@district.Id" data-district-name="@district.Name">
+                    <span class="d-flex w-100 justify-content-between align-items-center">
+                        <span>@district.Name</span>
+                        <i class="bi bi-chevron-right small opacity-50"></i>
+                    </span>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+        <h1 class="city-hero-title mb-2">@Model.Name</h1>
+        <p class="lead text-muted mx-auto" style="max-width: 700px;">@Model.Description</p>
+    </div>
+
+    <!-- Top Section: Map & Stats -->
+    <div class="row g-5 mb-5 align-items-stretch">
+        
+        <!-- MAP COLUMN (Left) -->
+        <div class="col-lg-7">
+            <div class="district-map-container-redesign h-100 shadow-sm rounded-4 overflow-hidden position-relative border bg-white">
+                <!-- Floating Trigger Button for Sidebar -->
+                <button class="btn btn-danger position-absolute top-0 start-0 m-3 shadow-sm rounded-pill px-3 py-2 z-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDistricts">
+                    <i class="bi bi-list-ul me-2"></i>İlçeler
+                </button>
+
+                <!-- Map Window -->
+                <div class="district-map-wrapper-redesign d-flex align-items-center justify-content-center" style="width: 100%; height: 750px; background-color: #f8f9fa;">
+                    <div id="svgContainer" style="width: 100%; height: 100%; overflow: hidden;">
+                        <object 
+                            type="image/svg+xml"
+                            data="/maps/districts/@(citySlug).svg"
+                            class="district-map-image"
+                            id="districtMap"
+                            style="width: 100%; height: 100%; object-fit: contain;"
+                            aria-label="@Model.Name İlçe Haritası">
+                            <div class="text-center p-5 text-muted bg-light rounded-3 mt-5">
+                                <i class="bi bi-map display-4 mb-3 d-block text-secondary"></i>
+                                <p>Harita mevcut değil</p>
+                            </div>
+                        </object>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS COLUMN (Right) -->
+        <div class="col-lg-5">
+            <div class="row g-3 h-100 align-content-center">
+                
+                <div class="col-6">
+                    <div class="stat-card-modern p-4 rounded-4 bg-white shadow-sm border h-100">
+                        <div class="stat-icon-wrapper mb-2 text-danger display-6"><i class="bi bi-aspect-ratio"></i></div>
+                        <div class="stat-label text-muted small">Plaka Kodu</div>
+                        <div class="stat-value fw-bold fs-3 text-dark">@Model.PlateCode.ToString("00")</div>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="stat-card-modern p-4 rounded-4 bg-white shadow-sm border h-100">
+                        <div class="stat-icon-wrapper mb-2 text-danger display-6"><i class="bi bi-people-fill"></i></div>
+                        <div class="stat-label text-muted small">Nüfus</div>
+                        <div class="stat-value fw-bold fs-3 text-dark">@Model.Population.ToString("N0")</div>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="stat-card-modern p-4 rounded-4 bg-white shadow-sm border h-100">
+                        <div class="stat-icon-wrapper mb-2 text-danger display-6"><i class="bi bi-geo-fill"></i></div>
+                        <div class="stat-label text-muted small">Bölge</div>
+                        <div class="stat-value fw-bold fs-4 text-dark">@Model.Region</div>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="stat-card-modern p-4 rounded-4 bg-white shadow-sm border h-100">
+                        <div class="stat-icon-wrapper mb-2 text-danger display-6"><i class="bi bi-fullscreen"></i></div>
+                        <div class="stat-label text-muted small">Yüzölçümü</div>
+                        <div class="stat-value fw-bold fs-3 text-dark">@Model.AreaKm2.ToString("N0") <small class="text-muted fw-normal fs-6">km²</small></div>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="stat-card-modern p-4 rounded-4 bg-white shadow-sm border h-100">
+                        <div class="stat-icon-wrapper mb-2 text-danger display-6"><i class="bi bi-building"></i></div>
+                        <div class="stat-label text-muted small">İlçeler</div>
+                        <div class="stat-value fw-bold fs-3 text-dark">@Model.DistrictCount</div>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="stat-card-modern p-4 rounded-4 bg-white shadow-sm border h-100">
+                        <div class="stat-icon-wrapper mb-2 text-danger display-6"><i class="bi bi-arrow-up"></i></div>
+                        <div class="stat-label text-muted small">Rakım</div>
+                        <div class="stat-value fw-bold fs-3 text-dark">@Model.Elevation <small class="text-muted fw-normal fs-6">m</small></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Section -->
+    @if (Model.Photos != null && Model.Photos.Any())
+    {
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex align-items-center mb-4">
+                    <h3 class="fw-bold m-0 me-3">Şehir Galerisi</h3>
+                    <div class="flex-grow-1 border-bottom"></div>
+                </div>
+                
+                <div id="photoCarousel" class="carousel slide rounded-4 overflow-hidden shadow-lg" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @for (int i = 0; i < Model.Photos.Count(); i++)
+                        {
+                            <div class="carousel-item @(i == 0 ? "active" : "")" style="background-color: #f8f9fa;">
+                                <img src="@Model.Photos.ElementAt(i).ImagePath" class="d-block w-100" alt="@Model.Photos.ElementAt(i).Caption" style="height: 600px; object-fit: contain;">
+                                @if (!string.IsNullOrEmpty(Model.Photos.ElementAt(i).Caption))
+                                {
+                                    <div class="carousel-caption d-none d-md-block p-4" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); left:0; right:0; bottom:0;">
+                                        <p class="fs-5 fw-light mb-0">@Model.Photos.ElementAt(i).Caption</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#photoCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"></span>
+                        <span class="visually-hidden">Önceki</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#photoCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"></span>
+                        <span class="visually-hidden">Sonraki</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Comments Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="bg-white rounded-4 p-4 p-lg-5 shadow-sm border border-light">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <h3 class="fw-bold mb-0">Ziyaretçi Yorumları</h3>
+                    <span class="badge bg-light text-dark border">
+                        @(Model.Comments?.Count ?? 0) Yorum
+                    </span>
+                </div>
+
+                <!-- Yorum Ekleme Formu (Moved to Top) -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="bg-light p-4 rounded-4 border mb-5">
+                        <h5 class="fw-bold mb-3">Yorum Ekle</h5>
+                        <form asp-controller="Comment" asp-action="Create" method="post" enctype="multipart/form-data" id="commentForm">
+                            <input type="hidden" name="CityId" value="@Model.Id" />
+                            <input type="hidden" name="CityName" value="@Model.Name" />
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">İlçe (Opsiyonel)</label>
+                                    <select name="DistrictId" class="form-select border-0 shadow-sm">
+                                        <option value="">Genel</option>
+                                        @foreach (var district in Model.Districts)
+                                        {
+                                            <option value="@district.Id">@district.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-muted">Kategori</label>
+                                    <select name="Category" class="form-select border-0 shadow-sm" required>
+                                        <option value="Yemek">Yemek</option>
+                                        <option value="Turistik">Turistik</option>
+                                        <option value="Genel">Genel</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Fotoğraf Ekle (Opsiyonel)</label>
+                                <input type="file" name="Photo" class="form-control border-0 shadow-sm" accept="image/*">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Puanınız</label>
+                                <div class="rating-select d-flex gap-2">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Rating" id="rating5" value="5" checked>
+                                        <label class="form-check-label text-warning" for="rating5"><i class="bi bi-star-fill"></i> 5</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Rating" id="rating4" value="4">
+                                        <label class="form-check-label text-warning" for="rating4"><i class="bi bi-star-fill"></i> 4</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Rating" id="rating3" value="3">
+                                        <label class="form-check-label text-warning" for="rating3"><i class="bi bi-star-fill"></i> 3</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Rating" id="rating2" value="2">
+                                        <label class="form-check-label text-warning" for="rating2"><i class="bi bi-star-fill"></i> 2</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Rating" id="rating1" value="1">
+                                        <label class="form-check-label text-warning" for="rating1"><i class="bi bi-star-fill"></i> 1</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Yorumunuz</label>
+                                <textarea name="Content" class="form-control border-0 shadow-sm" rows="3" required placeholder="Deneyimlerinizi paylaşın..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger w-100 fw-bold shadow-sm">Yorumu Gönder</button>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-4 bg-light rounded-4 text-center border dashed-border mb-5">
+                        <p class="mb-0 text-muted">Yorum yapmak için <a asp-controller="Account" asp-action="Login" class="text-danger fw-bold text-decoration-none">giriş yapın</a>.</p>
+                    </div>
+                }
+
+                <!-- Kategori Filtreleri -->
+                <div class="d-flex gap-2 mb-4 overflow-auto pb-2">
+                    <button type="button" class="btn btn-sm rounded-pill px-3 category-filter-btn @(ViewBag.SelectedCategory == null ? "active btn-dark" : "btn-outline-secondary")" data-category="">Tümü</button>
+                    <button type="button" class="btn btn-sm rounded-pill px-3 category-filter-btn @(ViewBag.SelectedCategory == "Yemek" ? "active btn-dark" : "btn-outline-secondary")" data-category="Yemek">Yemek</button>
+                    <button type="button" class="btn btn-sm rounded-pill px-3 category-filter-btn @(ViewBag.SelectedCategory == "Turistik" ? "active btn-dark" : "btn-outline-secondary")" data-category="Turistik">Turistik</button>
+                    <button type="button" class="btn btn-sm rounded-pill px-3 category-filter-btn @(ViewBag.SelectedCategory == "Genel" ? "active btn-dark" : "btn-outline-secondary")" data-category="Genel">Genel</button>
+                </div>
+
+                <!-- Yorum Listesi -->
+                <div id="commentsContainer" class="mb-5">
+                    @if (Model.Comments != null && Model.Comments.Any())
+                    {
+                        foreach (var comment in Model.Comments)
+                        {
+                            <div id="comment-@comment.Id" class="comment-card mb-3 p-3 bg-light rounded-3 border-0">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="bg-gradient bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                            @comment.AppUser?.UserName?.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark" style="font-size: 0.95rem;">@comment.AppUser?.UserName</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">@comment.CreatedAt.ToString("dd MMMM yyyy")</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-end">
+                                        @for (int i = 0; i < 5; i++)
+                                        {
+                                            <i class="bi bi-star-fill @(i < comment.Rating ? "text-warning" : "text-black-50 opacity-25")" style="font-size: 0.8rem;"></i>
+                                        }
+                                        
+                                        @if (User.Identity?.IsAuthenticated == true && comment.AppUser?.UserName == User.Identity?.Name) 
+                                        {
+                                            <div class="mt-1">
+                                                <a href="/Comment/Edit/@comment.Id" class="text-muted text-decoration-none small"><i class="bi bi-pencil-square"></i> Düzenle</a>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <p class="text-secondary mb-2" style="font-size: 0.95rem; line-height: 1.5;">@comment.Content</p>
+                                
+                                @if (!string.IsNullOrEmpty(comment.PhotoPath))
+                                {
+                                    <div class="mb-3">
+                                        <img src="@comment.PhotoPath" class="img-fluid rounded-3 shadow-sm" style="max-height: 200px;" alt="Yorum Fotoğrafı">
+                                    </div>
+                                }
+
+                                <div class="d-flex gap-2">
+                                    @if (comment.District != null)
+                                    {
+                                        <span class="badge bg-white text-secondary border fw-normal">@comment.District.Name</span>
+                                    }
+                                    <span class="badge @(comment.Category == "Yemek" ? "badge-food" : comment.Category == "Turistik" ? "badge-tourist" : "badge-general")">
+                                        @comment.Category
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-chat-square-text text-black-50 display-6 mb-3 d-block"></i>
+                            <p class="text-muted">Henüz yorum yapılmamış. İlk yorumu sen yap!</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cityId = @Model.Id;
+    let selectedDistrictId = @(ViewBag.SelectedDistrictId?.ToString() ?? "null");
+    let selectedCategory = "@(ViewBag.SelectedCategory ?? "")";
+
+    const svgObject = document.getElementById("districtMap");
+    let svgElement = null;
+    
+    function initSvgInteractions() {
+        if (!svgObject || !svgObject.contentDocument) return;
+
+        const svgDoc = svgObject.contentDocument;
+        svgElement = svgDoc.querySelector("svg");
+        if (!svgElement) return;
+
+        svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        svgElement.setAttribute("width", "100%");
+        svgElement.setAttribute("height", "100%");
+        // Her ihtimale karşı SVG seviyesinde pointer-event'leri aç ve imleci el yap
+        svgElement.style.pointerEvents = "auto";
+        svgElement.style.cursor = "pointer";
+
+        // --- PATH INTERACTIONS (Click & Hover) ---
+        const paths = svgDoc.querySelectorAll("path");
+        paths.forEach(path => {
+            const districtName = getDistrictName(path);
+            
+            // Sadece renk / stroke animasyonu, konum sabit kalsın
+            path.style.transition = "fill 140ms ease, stroke 140ms ease, stroke-width 140ms ease";
+            path.style.cursor = "pointer";
+            path.style.vectorEffect = "non-scaling-stroke";
+            // Bazı SVG'lerde pointer-events kapalı olabiliyor, açalım:
+            path.style.pointerEvents = "auto";
+
+            path.addEventListener("mouseenter", () => {
+                const activeBtn = document.querySelector(".district-filter-btn.active");
+                const activeName = (activeBtn ? (activeBtn.dataset.districtName || "") : "").toLowerCase();
+                const currentName = (districtName || "").toLowerCase();
+
+                // Seçili olan ilçeyi çok bozmadan, diğerlerinde net hover efekti ver
+                if (currentName === activeName && currentName !== "") {
+                    // Zaten seçili ise sadece hafif stroke vurgusu
+                    path.style.stroke = "rgba(230,57,70,0.85)";
+                    path.style.strokeWidth = "2px";
+                }
+                else {
+                    // Seçili olmayan veya isimsiz tüm path'lerde net hover rengi
+                    path.style.fill = "#ffe5e5";
+                    path.style.stroke = "rgba(230,57,70,0.75)";
+                    path.style.strokeWidth = "1.8px";
+                }
+            });
+
+            path.addEventListener("mouseleave", () => {
+                const activeBtn = document.querySelector(".district-filter-btn.active");
+                const activeName = activeBtn ? (activeBtn.dataset.districtName || "") : "";
+                
+                // Hoverdan çıkınca sadece hover efektlerini temizle
+                path.style.stroke = "";
+                path.style.strokeWidth = "";
+                
+                if (districtName && districtName.toLowerCase() !== activeName.toLowerCase()) {
+                    // Seçili değilse eski rengine dön
+                    path.style.fill = "";
+                } else if (districtName && districtName.toLowerCase() === activeName.toLowerCase()) {
+                    // Seçili olan ilçe kırmızı kalmaya devam etsin
+                    path.style.fill = "#ff6b6b"; 
+                }
+            });
+
+            // CLICK
+            path.addEventListener("click", (e) => {
+                if (districtName) {
+                    selectDistrictByName(districtName);
+                    
+                    const offcanvasElement = document.getElementById('offcanvasDistricts');
+                    if (offcanvasElement) {
+                        const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvasElement);
+                        bsOffcanvas.show();
+                    }
+                }
+            });
+        });
+    }
+
+    // Initialize SVG Interactions (hem load event'inde hem de hazırsa hemen)
+    if (svgObject) {
+        if (svgObject.contentDocument) {
+            // Bazı tarayıcılarda DOMContentLoaded'dan önce yüklenmiş olabilir
+            initSvgInteractions();
+        } else {
+            svgObject.addEventListener("load", initSvgInteractions);
+        }
+    }
+
+    // --- DISTRICT LOGIC ---
+
+    function getDistrictName(path) {
+        return path.getAttribute("name") || 
+                path.getAttribute("id") || 
+                path.getAttribute("data-name") || 
+                path.getAttribute("title") || "";
+    }
+
+    function selectDistrictByName(name) {
+        if (!name) return;
+        
+        // Find corresponding button
+        const buttons = document.querySelectorAll(".district-filter-btn");
+        let foundBtn = null;
+        
+        // Try exact match then fuzzy
+        buttons.forEach(btn => {
+            const btnName = btn.dataset.districtName || "";
+            if (btnName.toLowerCase() === name.toLowerCase()) {
+                foundBtn = btn;
+            }
+        });
+
+        if (foundBtn) {
+            foundBtn.click(); // Trigger existing logic
+            
+            // Scroll to button in offcanvas
+            foundBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            console.warn("District button not found for:", name);
+        }
+    }
+
+    function highlightDistrictInMap(districtName) {
+        if (!svgObject || !svgObject.contentDocument) return;
+        
+        const svgDoc = svgObject.contentDocument;
+        const paths = svgDoc.querySelectorAll("path");
+        
+        // Clear all
+        paths.forEach(path => {
+            path.style.fill = "";
+            path.style.stroke = "";
+            path.style.strokeWidth = "";
+            path.style.filter = "";
+            path.style.transform = "";
+        });
+        
+        if (districtName) {
+            let found = false;
+            paths.forEach(path => {
+                const pathName = getDistrictName(path);
+                if (pathName.toLowerCase() === districtName.toLowerCase()) {
+                    path.style.fill = "#ff6b6b";
+                    path.style.stroke = "#e63946";
+                    path.style.strokeWidth = "2px";
+                    // Daha hafif bir gölge (ağır gölge “kirli” duruyor)
+                    path.style.filter = "drop-shadow(0px 2px 6px rgba(0,0,0,0.18))";
+                    found = true;
+                }
+            });
+        }
+    }
+
+    // Search Filter - İlçe arama (yazılan harfleri içeren ilçeleri göster)
+    const districtSearch = document.getElementById("districtSearch");
+    if (districtSearch) {
+        districtSearch.addEventListener("input", function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const districtButtons = document.querySelectorAll(".district-filter-btn");
+            
+            districtButtons.forEach(btn => {
+                // Önce data-district-name'den al, yoksa textContent'ten al
+                let districtName = btn.dataset.districtName || "";
+                
+                // Eğer data-district-name boşsa (örn: "Tümü" butonu), textContent'ten al
+                if (!districtName) {
+                    districtName = btn.textContent.trim();
+                }
+                
+                // Küçük harfe çevir ve kontrol et
+                const nameLower = districtName.toLowerCase();
+                
+                // Yazılan harfleri içeriyorsa göster, boşsa tümünü göster
+                if (nameLower.includes(searchTerm) || searchTerm === "") {
+                    btn.classList.remove("d-none");
+                } else {
+                    btn.classList.add("d-none");
+                }
+            });
+        });
+    }
+
+    // List Click Handler
+    document.querySelectorAll(".district-filter-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            // UI Update
+            document.querySelectorAll(".district-filter-btn").forEach(b => b.classList.remove("active"));
+            this.classList.add("active");
+            
+            // Logic
+            selectedDistrictId = this.dataset.districtId || null;
+            const districtName = this.dataset.districtName || "";
+            
+            // Sync Map
+            highlightDistrictInMap(districtName); // Sync Map
+            
+            // Load Data
+            loadComments();
+        });
+    });
+
+    // Category Filter
+    document.querySelectorAll(".category-filter-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            // Update UI
+            document.querySelectorAll(".category-filter-btn").forEach(b => {
+                b.classList.remove("active", "btn-dark");
+                b.classList.add("btn-outline-secondary");
+            });
+            this.classList.remove("btn-outline-secondary");
+            this.classList.add("active", "btn-dark");
+            
+            selectedCategory = this.dataset.category || "";
+            loadComments();
+        });
+    });
+
+    // Initial Load Highlight
+    window.addEventListener("load", function() {
+        const activeBtn = document.querySelector(".district-filter-btn.active");
+        if (activeBtn && activeBtn.dataset.districtName) {
+            // Need a slight delay or retry for SVG to be fully ready inside object
+            const interval = setInterval(() => {
+                if (svgObject.contentDocument && svgObject.contentDocument.querySelector("svg")) {
+                    highlightDistrictInMap(activeBtn.dataset.districtName);
+                    clearInterval(interval);
+                }
+            }, 100);
+            
+            // Safety timeout
+            setTimeout(() => clearInterval(interval), 5000);
+        }
+    });
+
+    function loadComments() {
+        const districtIdParam = selectedDistrictId && selectedDistrictId !== "null" ? selectedDistrictId : "";
+        const url = `/City/GetCommentsByDistrict?cityId=${cityId}&districtId=${districtIdParam}&category=${selectedCategory}`;
+        
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("commentsContainer").innerHTML = html;
+            })
+            .catch(error => {
+                console.error("Yorumlar yüklenirken hata:", error);
+            });
+    }
+});
+</script>

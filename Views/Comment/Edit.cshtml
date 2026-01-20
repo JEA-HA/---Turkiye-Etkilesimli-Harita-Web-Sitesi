@@ -1,0 +1,89 @@
+@model TurkeyCityGuide.Controllers.EditCommentViewModel
+
+@{
+    ViewData["Title"] = "Yorum Düzenle";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="bg-white p-4 p-md-5 rounded-4 shadow-sm border">
+                
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold mb-1">Yorumu Düzenle</h2>
+                    <p class="text-muted small">@Model.CityName @(Model.DistrictName != null ? " - " + Model.DistrictName : "") deneyimini güncelle.</p>
+                </div>
+
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="CityName" />
+                    
+                    <!-- Content -->
+                    <div class="mb-4">
+                        <label asp-for="Content" class="form-label small text-muted text-uppercase fw-bold ls-1">Yorumunuz</label>
+                        <textarea asp-for="Content" class="form-control form-control-lg bg-light border-0" rows="5" placeholder="Deneyiminizi paylaşın..."></textarea>
+                        <span asp-validation-for="Content" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-4">
+                        <label asp-for="Category" class="form-label small text-muted text-uppercase fw-bold ls-1">Kategori</label>
+                        <select asp-for="Category" class="form-select form-select-lg bg-light border-0">
+                            <option value="Yemek">Yemek</option>
+                            <option value="Turistik">Turistik</option>
+                            <option value="Genel">Genel</option>
+                        </select>
+                        <span asp-validation-for="Category" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Rating -->
+                    <div class="mb-4">
+                        <label class="form-label small text-muted text-uppercase fw-bold ls-1">Puanınız</label>
+                        <div class="rating-select d-flex gap-3 justify-content-center bg-light p-3 rounded-3">
+                            @for (int i = 5; i >= 1; i--)
+                            {
+                                <div class="form-check form-check-inline m-0">
+                                    <input class="form-check-input" type="radio" asp-for="Rating" id="ratingEdit@(i)" value="@i">
+                                    <label class="form-check-label text-warning fs-5" for="ratingEdit@(i)"><i class="bi bi-star-fill"></i> @i</label>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="Rating" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Photo -->
+                    <div class="mb-4">
+                        <label class="form-label small text-muted text-uppercase fw-bold ls-1">Fotoğraf</label>
+                        @if (!string.IsNullOrEmpty(Model.ExistingPhotoPath))
+                        {
+                            <div class="mb-3 position-relative">
+                                <img src="@Model.ExistingPhotoPath" class="img-fluid rounded-3 shadow-sm border" style="max-height: 200px;" alt="Mevcut Fotoğraf">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" asp-for="DeletePhoto" id="deletePhotoCheck">
+                                    <label class="form-check-label text-danger small" for="deletePhotoCheck">
+                                        Mevcut fotoğrafı sil
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                        
+                        <input type="file" asp-for="Photo" class="form-control form-control-lg bg-light border-0" accept="image/*">
+                        <div class="form-text small">Yeni fotoğraf yüklerseniz eskisi değişecektir.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg fw-bold shadow-sm">
+                            <i class="bi bi-check-circle-fill me-2"></i>Değişiklikleri Kaydet
+                        </button>
+                        <a href="/City/Detail/@Model.CityName" class="btn btn-light btn-lg text-muted">İptal</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

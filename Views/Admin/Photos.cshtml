@@ -1,0 +1,70 @@
+@model IEnumerable<TurkeyCityGuide.Models.CityPhoto>
+
+@{
+    ViewData["Title"] = "Fotoğraf Yönetimi";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Fotoğraf Yönetimi</h1>
+    </div>
+
+    <div class="mb-3">
+        <form method="get" asp-action="Photos">
+            <select name="cityId" class="form-select d-inline-block" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Tüm İller</option>
+                @foreach (var city in ViewBag.Cities)
+                {
+                    <option value="@city.Id" selected="@(ViewBag.SelectedCityId != null && ViewBag.SelectedCityId == city.Id)">@city.Name</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    <div class="row g-3">
+        @foreach (var photo in Model)
+        {
+            <div class="col-md-3">
+                <div class="card">
+                    <img src="@photo.ImagePath" class="card-img-top" alt="@photo.Caption" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <p class="card-text small">@photo.City.Name</p>
+                        @if (!string.IsNullOrEmpty(photo.Caption))
+                        {
+                            <p class="card-text">@photo.Caption</p>
+                        }
+                        <form asp-action="DeletePhoto" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@photo.Id" />
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bu fotoğrafı silmek istediğinizden emin misiniz?')">Sil</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="mt-4">
+        <h3>Yeni Fotoğraf Yükle</h3>
+        <form asp-action="UploadPhoto" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">İl</label>
+                <select name="cityId" class="form-select" required>
+                    <option value="">İl Seçiniz</option>
+                    @foreach (var city in ViewBag.Cities)
+                    {
+                        <option value="@city.Id">@city.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Dosya</label>
+                <input type="file" name="file" class="form-control" accept="image/*" required />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Açıklama (Opsiyonel)</label>
+                <input type="text" name="caption" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-danger">Yükle</button>
+        </form>
+    </div>
+</div>

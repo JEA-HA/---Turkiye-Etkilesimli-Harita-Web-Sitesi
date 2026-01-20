@@ -1,0 +1,46 @@
+@model IEnumerable<TurkeyCityGuide.Models.District>
+
+@{
+    ViewData["Title"] = "İlçe Yönetimi";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>İlçe Yönetimi</h1>
+        <p class="text-muted mb-0">İlçeler SVG harita dosyasından otomatik olarak oluşturulur.</p>
+    </div>
+
+    <div class="mb-3">
+        <form method="get" asp-action="Districts">
+            <select name="cityId" class="form-select d-inline-block" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Tüm İller</option>
+                @foreach (var city in ViewBag.Cities)
+                {
+                    <option value="@city.Id" selected="@(ViewBag.SelectedCityId != null && ViewBag.SelectedCityId == city.Id)">@city.Name</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>İl</th>
+                <th>İlçe Adı</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var district in Model)
+            {
+                <tr>
+                    <td>@district.City.Name</td>
+                    <td>@district.Name</td>
+                    <td>
+                        <span class="text-muted">Otomatik oluşturuldu</span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

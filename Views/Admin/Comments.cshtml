@@ -1,0 +1,44 @@
+@model IEnumerable<TurkeyCityGuide.Models.Comment>
+
+@{
+    ViewData["Title"] = "Yorum Yönetimi";
+}
+
+<div class="container py-4">
+    <h1>Yorum Yönetimi</h1>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Kullanıcı</th>
+                <th>İl</th>
+                <th>İlçe</th>
+                <th>Kategori</th>
+                <th>Puan</th>
+                <th>İçerik</th>
+                <th>Tarih</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var comment in Model)
+            {
+                <tr>
+                    <td>@comment.AppUser?.UserName</td>
+                    <td>@comment.City.Name</td>
+                    <td>@(comment.District?.Name ?? "Genel")</td>
+                    <td>@comment.Category</td>
+                    <td>@comment.Rating</td>
+                    <td>@(comment.Content.Length > 50 ? comment.Content.Substring(0, 50) + "..." : comment.Content)</td>
+                    <td>@comment.CreatedAt.ToString("dd.MM.yyyy")</td>
+                    <td>
+                        <form asp-action="DeleteComment" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@comment.Id" />
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bu yorumu silmek istediğinizden emin misiniz?')">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

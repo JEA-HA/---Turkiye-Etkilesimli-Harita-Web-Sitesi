@@ -1,0 +1,164 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TurkeyCityGuide</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/TurkeyCityGuide.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg border-bottom box-shadow mb-3">
+            <div class="container-fluid px-5">
+                <!-- Left: City List Toggle -->
+                <div class="d-flex w-25">
+                     <button class="btn btn-danger" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCityList" aria-controls="offcanvasCityList">
+                        <i class="bi bi-list me-1"></i> Şehirler
+                     </button>
+                     <a class="nav-link text-danger ms-3" asp-area="" asp-controller="Home" asp-action="Index" title="Ana Sayfa">
+                        <i class="bi bi-house-door-fill fs-4"></i>
+                     </a>
+                </div>
+
+                <!-- Center: Türkiye -->
+                <div class="d-flex justify-content-center w-50">
+                     <a class="navbar-brand m-0 fw-bold ls-1" asp-area="" asp-controller="Home" asp-action="Index">TÜRKİYE</a>
+                </div>
+
+                <!-- Right: Login/Register/Search -->
+                <div class="d-flex w-25 justify-content-end align-items-center">
+                    <!-- İl Arama -->
+                    <div class="input-group input-group-sm me-3" style="width: 250px;">
+                        <input type="text" class="form-control border-end-0 rounded-start" id="citySearchInput" placeholder="İl ara..." aria-label="Ara" list="cityList" autocomplete="off">
+                        <datalist id="cityList"></datalist>
+                        <button type="button" class="input-group-text bg-white border-start-0 text-muted rounded-end" id="citySearchBtn" style="cursor: pointer; border: none;"><i class="bi bi-search"></i></button>
+                    </div>
+                    
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="dropdown me-2">
+                            <button class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                @User.Identity.Name
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index">Admin Panel</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                }
+                                <li><a class="dropdown-item" asp-controller="Comment" asp-action="MyComments">Yorumlarım</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <button type="submit" class="dropdown-item">Çıkış Yap</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold me-2" asp-controller="Account" asp-action="Login">GİRİŞ YAP</a>
+                        <a class="btn btn-sm btn-danger px-3 rounded-pill fw-bold" asp-controller="Account" asp-action="Register">KAYIT OL</a>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container" style="margin-bottom: 60px;">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Render City List ViewComponent -->
+    @await Component.InvokeAsync("CityList")
+
+    <footer class="border-top footer text-muted" style="position: fixed; bottom: 0; width: 100%; background-color: white; z-index: 1000;">
+        <div class="container">
+            &copy; 2026 - TurkeyCityGuide
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Global City Search Logic
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById("citySearchInput");
+            const cityList = document.getElementById("cityList");
+            const searchButton = document.getElementById("citySearchBtn");
+            let allCities = []; // Tüm şehirleri saklayacağız
+
+            // Fetch cities ve datalist'i dinamik olarak güncelle
+            if (cityList && searchInput) {
+                fetch('/City/GetCityNames')
+                    .then(response => response.json())
+                    .then(names => {
+                        allCities = names; // Tüm şehirleri sakla
+                        
+                        // İlk yüklemede tüm şehirleri göster
+                        updateDatalist(allCities);
+                        
+                        // Input değiştiğinde filtrele
+                        searchInput.addEventListener("input", function() {
+                            const searchTerm = this.value.toLowerCase().trim();
+                            
+                            if (searchTerm === "") {
+                                // Boşsa tüm şehirleri göster
+                                updateDatalist(allCities);
+                            } else {
+                                // Yazılan harfleri içeren şehirleri filtrele
+                                const filtered = allCities.filter(city => 
+                                    city.toLowerCase().includes(searchTerm)
+                                );
+                                updateDatalist(filtered);
+                            }
+                        });
+                    })
+                    .catch(err => console.error("Could not fetch city names", err));
+            }
+
+            // Datalist'i güncelleme fonksiyonu
+            function updateDatalist(cities) {
+                if (!cityList) return;
+                
+                // Mevcut option'ları temizle
+                cityList.innerHTML = "";
+                
+                // Yeni option'ları ekle
+                cities.forEach(name => {
+                    const option = document.createElement("option");
+                    option.value = name;
+                    cityList.appendChild(option);
+                });
+            }
+
+            // Navigation helper
+            function navigateToCity() {
+                const val = searchInput.value.trim();
+                if (val) {
+                     window.location.href = "/City/Detail/" + val;
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener("keypress", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        navigateToCity();
+                    }
+                });
+            }
+
+            if (searchButton) {
+                searchButton.addEventListener("click", navigateToCity);
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

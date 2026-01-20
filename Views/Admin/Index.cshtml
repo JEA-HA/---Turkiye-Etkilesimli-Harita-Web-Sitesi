@@ -1,0 +1,47 @@
+@model IEnumerable<TurkeyCityGuide.Models.City>
+
+@{
+    ViewData["Title"] = "Yönetim Paneli";
+}
+
+<div class="container py-4">
+    <h1 class="mb-4">Yönetim Paneli</h1>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">İller</h5>
+                    <p class="card-text">@Model.Count() il</p>
+                    <a asp-action="Cities" class="btn btn-danger">Yönet</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">İlçeler</h5>
+                    <p class="card-text">@Model.Sum(c => c.Districts.Count) ilçe</p>
+                    <a asp-action="Districts" class="btn btn-danger">Yönet</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Yorumlar</h5>
+                    <p class="card-text">@Model.Sum(c => c.Comments.Count) yorum</p>
+                    <a asp-action="Comments" class="btn btn-danger">Yönet</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Fotoğraflar</h5>
+                    <a asp-action="Photos" class="btn btn-danger">Yönet</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,44 @@
+@model IEnumerable<TurkeyCityGuide.Models.Comment>
+
+@if (Model != null && Model.Any())
+{
+    foreach (var comment in Model)
+    {
+        <div id="comment-@comment.Id" class="comment-card mb-3 p-3 bg-light rounded-3 border-0">
+            <div class="d-flex justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-gradient bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                        @(comment.AppUser?.UserName?.Substring(0, 1).ToUpper() ?? "?")
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark" style="font-size: 0.95rem;">@(comment.AppUser?.UserName ?? "Anonim")</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">@comment.CreatedAt.ToString("dd MMMM yyyy")</div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <i class="bi bi-star-fill @(i < comment.Rating ? "text-warning" : "text-black-50 opacity-25")" style="font-size: 0.8rem;"></i>
+                    }
+                </div>
+            </div>
+            <p class="text-secondary mb-2" style="font-size: 0.95rem; line-height: 1.5;">@comment.Content</p>
+            <div class="d-flex gap-2">
+                @if (comment.District != null)
+                {
+                    <span class="badge bg-white text-secondary border fw-normal">@comment.District.Name</span>
+                }
+                <span class="badge @(comment.Category == "Yemek" ? "badge-food" : comment.Category == "Turistik" ? "badge-tourist" : "badge-general")">
+                    @comment.Category
+                </span>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="bi bi-chat-square-text text-black-50 display-6 mb-3 d-block"></i>
+        <p class="text-muted">Bu kategoride/ilçede henüz yorum bulunmuyor.</p>
+    </div>
+}
