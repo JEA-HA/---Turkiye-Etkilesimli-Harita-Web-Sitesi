@@ -58,7 +58,7 @@ Bu proje, kullanıcıların Türkiye’yi daha iyi tanımasını ve tanıtmasın
 
 ## **Youtube Linki**
 
-[Proje Tanıtım Videosu](https://youtu.be/-CPGK9jMOBU)
+https://youtu.be/-CPGK9jMOBU
 
 ---
 
